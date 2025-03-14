@@ -555,10 +555,41 @@ function deleteCategory(int $id) : void {
 
 }
 
+/*
+                          ╔═════════════════════════════════════════════╗
+                          ║                                             ║
+                          ║                FILMS                        ║
+                          ║                                             ║
+                          ╚═════════════════════════════════════════════╝ 
+                          
+*/
 
 
+function addFilm(string $title, string $director, string $image, string $actors, string $ageLimit, string $duration, string $price, string $synopsis, string $date, string $stock) : void {
 
+    $data = [
+        'title' => $title,
+        'director' => $director,
+        'image' => $image,
+        'actors' => $actors,
+        'ageLimit' => $ageLimit,
+        'duration' => $duration,
+        'price' => $price,
+        'synopsis' => $synopsis,
+        'date' => $date,
+        'stock' => $stock
+    ];
 
+    foreach ($data as $key => $value) {
+        $data[$key] = htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
+    }
+
+    $cnx = connexionBdd();
+    $sql = "INSERT INTO films (title, director, image, actors, ageLimit, duration, price, synopsis, date, stock) VALUES (:title, :director, :image, :actors, :ageLimit, :duration, :price, :synopsis, :date, :stock)";
+    $request = $cnx->prepare($sql);
+    $request->execute($data);
+
+}
 
 
 ?>

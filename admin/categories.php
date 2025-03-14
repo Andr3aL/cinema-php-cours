@@ -67,38 +67,50 @@ if (!empty($_POST)) {
 
 
 
-
 $categories = allCategory();
 // debug($categories);
+// debug($categories);
+// debug($categories);
 
-if (isset($_GET['action']) && isset($_GET['id_categorie'])) { // on vérifie si y'a déjà une action
+if (isset($_GET['action']) && isset($_GET['id'])) { // on vérifie si y'a déjà une action
 
-    $idCategory = htmlspecialchars($_GET['id_categorie']);
+    // $idCategory = htmlspecialchars($_GET['id_categorie']);
 
     // $nameCategory = $_POST['name'];
     // $descCategory = $_POST['description'];
     // $selectCategory = selectCategory($idCategory, $nameCategory, $descCategory);
+    // debug($categories);
 
-    $categoryBdd = showIdCategory($idCategory);
+    
+    if (!empty($_GET['action']) && $_GET['action'] == "update" && !empty($_GET['id'])) { // $_GET['id'] ici, c'est l'id qui passe par l'url
+        
+        $idCategory = htmlspecialchars($_GET['id']);
+        // $showCategory = showIdCategory($idCategory);
+        $categoryBdd = showIdCategory($idCategory);
 
-    if (!empty($_GET['action']) && $_GET['action'] == "update" && !empty($_GET['id_categorie'])) { // $_GET['id'] ici, c'est l'id qui passe par l'url
+        // debug($categoryBdd);
 
-
-        $idCategory = htmlspecialchars($_GET['id_categorie']);
-        $showCategory = showIdCategory($idCategory);
-
-
+        // if ($categoryBdd) {
+        //     if($_GET['action'] != 'update') {
+        //         header('location:categories.php');
+        //     } 
+        //     else {
+        //         header('location:categories.php');
+        //     }
+        // } 
+        // else {
+        //     header('location:categories.php');
+        // }
     }
 
     if (!empty($_GET['action']) && $_GET['action'] == "delete" && !empty($_GET['id'])) {
 
 
         deleteCategory($idCategory);
+        header('location:categories.php'); // redirection pour rester sur le même fichier (header ici est une fonction déjà définie dans php)
     }
 
-    header('location:categories.php'); // redirection pour rester sur le même fichier (header ici est une fonction déjà définie dans php)
 }
-
 
 
 
@@ -120,6 +132,8 @@ require_once "../inc/header.inc.php";
 
         <?= $info ?>
 
+<?php //debug($_GET['action']); ?>
+
 
         <form action="" method="post" class="back">
 
@@ -134,7 +148,7 @@ require_once "../inc/header.inc.php";
                     <?php
                     // } else {
                     ?>
-                        <input type="text" id="name" name="name" class="form-control" value="<?= $showCategory['name'] ?? '' ?>">
+                        <input type="text" id="name" name="name" class="form-control" value="<?= $categoryBdd['name'] ?? '' ?>">
                     <?php
                     // }
                     ?>
@@ -152,7 +166,7 @@ require_once "../inc/header.inc.php";
                     <?php
                     // } else {
                     ?>
-                        <textarea id="description" name="description" class="form-control" rows="10"><?= $showCategory['description'] ?? '' ?></textarea>
+                        <textarea id="description" name="description" class="form-control" rows="10"><?= isset($categoryBdd) ? $categoryBdd['description'] : '' ?></textarea>
                     <?php
                     // }
                     ?>
@@ -163,7 +177,7 @@ require_once "../inc/header.inc.php";
 
             </div>
             <div class="row justify-content-center">
-                <button type="submit" class="btn btn-danger p-3"></button>
+                <button type="submit" class="btn btn-danger p-3"><?= isset($categoryBdd) ? 'Modifier une catégorie' : ' Ajouter une catégorie' ?></button>
             </div>
         </form>
     </div>
@@ -200,7 +214,7 @@ require_once "../inc/header.inc.php";
                         <td><?= ucfirst($categorie['name']) ?></td>
                         <td><?= substr(ucfirst($categorie['description']), 0, 100) . "..." ?></td>
 
-                        <td class="text-center"><a href="categories.php?action=delete&id=<?= $categorie['id_categorie'] ?>"><i class="bi bi-trash3-fill"></i></a></td>
+                        <td class="text-center"><a href="categories.php?action=delete&id=<?= $categorie['id_categorie'] ?>" onclick="return(confirm('Êtes-vous sûr de vouloir supprimer cette categorie ?'))"><i class="bi bi-trash3-fill"></i></a></td>
                         <td class="text-center"><a href="categories.php?action=update&id=<?= $categorie['id_categorie'] ?>"><i class="bi bi-pen-fill"></i></a></td>
 
                     </tr>
