@@ -565,9 +565,10 @@ function deleteCategory(int $id) : void {
 */
 
 
-function addFilm(string $title, string $director, string $image, string $actors, string $ageLimit, string $duration, string $price, string $synopsis, string $date, string $stock) : void {
+function addFilm(int $category_id, string $title, string $director, string $image, string $actors, string $ageLimit, string $duration, float $price, string $synopsis, string $date, int $stock) : void {
 
     $data = [
+        'category_id' => $category_id,
         'title' => $title,
         'director' => $director,
         'image' => $image,
@@ -585,7 +586,7 @@ function addFilm(string $title, string $director, string $image, string $actors,
     }
 
     $cnx = connexionBdd();
-    $sql = "INSERT INTO films (title, director, image, actors, ageLimit, duration, price, synopsis, date, stock) VALUES (:title, :director, :image, :actors, :ageLimit, :duration, :price, :synopsis, :date, :stock)";
+    $sql = "INSERT INTO films (category_id, title, director, image, actors, ageLimit, duration, price, synopsis, date, stock) VALUES (:category_id, :title, :director, :image, :actors, :ageLimit, :duration, :price, :synopsis, :date, :stock)";
     $request = $cnx->prepare($sql);
     $request->execute($data);
 

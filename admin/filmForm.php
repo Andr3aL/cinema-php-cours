@@ -26,9 +26,9 @@ if (!empty($_POST)) {
 // debug($_POST);
     if ($verif === false) {
         $info = alert("Veuillez renseigner tous les champs", "danger");
-debug($_POST);
-
+        
     } else {
+        // debug($_POST);
 
         if (!isset($_POST['title']) || strlen(trim($_POST['title'])) < 2 || strlen(trim($_POST['title'])) > 50) {
             // debug($_POST);
@@ -39,11 +39,31 @@ debug($_POST);
             $info .= alert("Le champ director n'est pas valide", "danger");
         }
 
-        if (!isset($_POST['image'])) {
+
+
+
+
+
+
+
+
+// $_FILES['image']['full_path'];
+        if (!isset($_FILES['image']) || $_FILES['image']['error'] !== 0) {
             $info .= alert("Le champ image n'est pas valide", "danger");
         }
 
-        if (!isset($_POST['actors']) || strlen(trim($_POST['actors'])) < 3 || strlen(trim($_POST['actors'])) > 50) {
+
+
+
+
+
+
+
+
+
+
+
+        if (!isset($_POST['actors']) || strlen(trim($_POST['actors'])) < 3) {
             $info .= alert("Le champ actors n'est pas valide", "danger");
         }
         if (!isset($_POST['ageLimit'])) {
@@ -69,17 +89,45 @@ debug($_POST);
         if (!isset($_POST['stock'])) {
             $info .= alert("Le champ stock n'est pas valide", "danger");
         } 
-        elseif($info = "") {
+
+        debug($info);
+
+        if($info = "") {
+            
+debug($_POST);
+
             $title = trim(htmlspecialchars($_POST['title']));
             $director = trim(htmlspecialchars($_POST['director']));
-            $image = trim(htmlspecialchars($_POST['image']));
+
+
+
+
+            // $image = trim(htmlspecialchars($_POST['image']));
+
+            $upload_dir = '../assets/img/';
+            $file_name = basename($_FILES['image']['name']);
+            $upload_path = $upload_dir . $file_name;
+
+            if (move_uploaded_file($_FILES['image']['tmp_name'], $upload_path)) {
+                // echo "Fichier uploadé avec succès : " . $upload_path;
+                $image = $file_name;
+                 // on stocke uniquement le nom du fichier
+            } else {
+                // echo "Erreur lors du téléchargement.";
+                $info .= alert("Erreur lors du téléchargement de l'image.", "danger");
+            }
+
+
+            // $image = trim(htmlspecialchars($_POST['image']));
+
             $actors = trim(htmlspecialchars($_POST['actors']));
             $ageLimit = trim(htmlspecialchars($_POST['ageLimit']));
             $duration = trim(htmlspecialchars($_POST['duration']));
-            $price = trim(htmlspecialchars($_POST['price']));
+            $price = intval(trim(htmlspecialchars($_POST['price'])));
             $synopsis = trim(htmlspecialchars($_POST['synopsis']));
             $date = trim(htmlspecialchars($_POST['date']));
-            $stock = trim(htmlspecialchars($_POST['stock']));
+            $stock = intval(trim(htmlspecialchars($_POST['stock'])));
+            $category_id = intval(trim(htmlspecialchars($_POST['categories'])));
 
             // if ($film) {
 
@@ -88,13 +136,16 @@ debug($_POST);
             //     // // $info = alert("La catégorie existe déjà", "danger");
             // 
             // } elseif {
-                addFilm($title, $director, $image, $actors, $ageLimit, $duration, $price, $synopsis, $date, $stock);
+
+            if ($info == "") {
+                addFilm($category_id, $title, $director, $file_name, $actors, $ageLimit, $duration, $price, $synopsis, $date, $stock);
                 
                 $info = alert("Le film a bien été ajouté", "success");
-// debug($_POST);
             }
+// debug($_POST);
         }
     }
+}
 
 
 
@@ -105,7 +156,11 @@ require_once "../inc/header.inc.php";
 
 
 <main>
-    <h2 class="text-center fw-bolder mb-5 text-danger"></h2>
+    <h2 class="text-center fw-bolder mb-5 text-danger">Ajout de film</h2>
+
+        <?php
+        echo $info;
+        ?>
 
         <form action="" method="post" class="back" enctype="multipart/form-data">
         <!-- il faut isérer une image pour chaque film, pour le traitement des images et des fichiers en PHP on utilise la surperglobal $_FILES -->
@@ -113,13 +168,32 @@ require_once "../inc/header.inc.php";
             <div class="col-md-6 mb-5">
                 <label for="title">Titre de film</label>
                 <input type="text" name="title" id="title" class="form-control" value="">
-
             </div>
+
+
+
+
+
+
+
+
+
+
             <div class="col-md-6 mb-5">
                 <label for="image">Photo</label>
                 <br>
                 <input type="file" name="image" id="image">
             </div>
+
+
+
+
+
+
+
+
+
+
         </div>
         <div class="row">
             <div class="col-md-6 mb-5">
@@ -135,7 +209,7 @@ require_once "../inc/header.inc.php";
             <!-- raccouci bs5 select multiple -->
             <div class="mb-3">
                 <label for="ageLimit" class="form-label">Àge limite</label>
-                <select multiple class="form-select form-select-lg" name="ageLimit" id="ageLimit">
+                <select class="form-select form-select-lg" name="ageLimit" id="ageLimit">
                     <option value="10">10</option>                  
                     <option value="13">13</option>
                     <option value="16">16</option>
@@ -146,13 +220,21 @@ require_once "../inc/header.inc.php";
             <label for="categories">Genre du film</label>
 
          
-                <div class="form-check col-sm-12 col-md-4">
+            
+            <?php $categories = allCategory();
+        foreach($categories as $categorie) : 
+            // var_dump($categorie['name']);
+            ?>
+            <div class="form-check col-sm-12 col-md-4">
 
+                    <input class="form-check-input" type="radio" name="categories" id="<?= $categorie['name']?>" value="<?= $categorie['id_categorie'] ?>">
 
-                    <input class="form-check-input" type="radio" name="categories" id="" value=""  checked>
-
-                    <label class="form-check-label" for=""></label>
+                    <label class="form-check-label" for="<?= $categorie['name']?>">
+                        <?= ucfirst(html_entity_decode($categorie['name']))?>
+                    </label>
                 </div>
+
+        <?php endforeach; ?>
 
            
 
