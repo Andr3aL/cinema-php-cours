@@ -72,7 +72,7 @@ require_once "../inc/header.inc.php";
                             <!-- Je récupére les valeus de mon tabelau $film dans des td -->
                             <td><?= $film['id_film'] ?></td>
                             <td><?= ucfirst($film['title']) ?></td>
-                            <td><img src="<?=RACINE_SITE?>assets/img/<?= $film['image'] ?>" alt="affiche du film" class="img-fluid"></td>
+                            <td><img style="height: 200px; width: 150px;" src="<?=RACINE_SITE?>assets/img/<?= $film['image'] ?>" alt="affiche du film" class="img-fluid"></td>
                             <td><?= html_entity_decode($film['director']) ?></td>
                             <td> 
                                 <ul>
@@ -94,7 +94,7 @@ require_once "../inc/header.inc.php";
                             <td><?= html_entity_decode($film['duration']) ?></td>
                             <td><?= html_entity_decode($film['price']) ?>€</td>
                             <td><?= html_entity_decode($film['stock']) ?></td>
-                            <td><?= html_entity_decode(substr(ucfirst($film['synopsis']), 0, 100)) . "..." ?></td>
+                            <td style="height: 200px; width: 500px;"><?= html_entity_decode(substr(ucfirst($film['synopsis']), 0, 500)) . "..." ?></td>
                             <td><?= html_entity_decode($film['date']) ?></td>
                             <td class="text-center"><a href="films.php?action=delete&id=<?= $film['id_film'] ?>" onclick="return(confirm('Êtes-vous sûr de vouloir supprimer ce film ?'))"><i class="bi bi-trash3-fill"></i></a></td>
                             <td class="text-center"><a href="filmForm.php?action=update&id=<?= $film['id_film'] ?>"><i class="bi bi-pen-fill"></i></a></td>
