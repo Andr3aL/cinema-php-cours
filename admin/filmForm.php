@@ -47,9 +47,15 @@ if (!empty($_POST)) {
 
 
 
-// $_FILES['image']['full_path'];
-        if (!isset($_FILES['image']) || $_FILES['image']['error'] !== 0) {
-            $info .= alert("Le champ image n'est pas valide", "danger");
+        // $_FILES['image']['full_path'];
+        if (!isset($_FILES['image']) || $_FILES['image']['error'] != 0) {
+            $info .= alert("Erreur sur l'image", "danger");
+        } else {
+            $extensions = ['jpg', 'jpeg', 'png', 'gif'];
+            $extension = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
+            if (!in_array($extension, $extensions)) {
+                $info .= alert("L'extension de l'image n'est pas valide", "danger");
+            }
         }
 
 
@@ -58,14 +64,14 @@ if (!empty($_POST)) {
 
 
 
-
-
-
-
+        if (!isset($_POST['categories'])) {
+            $info .= alert("Le champ categories n'est pas valide", "danger");
+        }
 
         if (!isset($_POST['actors']) || strlen(trim($_POST['actors'])) < 3) {
             $info .= alert("Le champ actors n'est pas valide", "danger");
         }
+
         if (!isset($_POST['ageLimit'])) {
             $info .= alert("Le champ ageLimit n'est pas valide", "danger");
         }
@@ -74,7 +80,7 @@ if (!empty($_POST)) {
             $info .= alert("Le champ duration n'est pas valide", "danger");
         }
 
-        if (!isset($_POST['price']) || !preg_match("/[0-9]/", $_POST['price'])) {
+        if (!isset($_POST['price']) || !is_numeric($_POST['price'])) {
             $info .= alert("Le champ price n'est pas valide", "danger");
         }
 
@@ -92,9 +98,10 @@ if (!empty($_POST)) {
 
         debug($info);
 
-        if($info = "") {
-            
-debug($_POST);
+        if($info == "") {
+            // debug($_FILES);
+            // debug($_FILES['image']);
+// debug($_POST);
 
             $title = trim(htmlspecialchars($_POST['title']));
             $director = trim(htmlspecialchars($_POST['director']));
@@ -102,24 +109,29 @@ debug($_POST);
 
 
 
+            $image = $_FILES['image']['name'];
+
+
+
+
+            // $upload_dir = '../assets/img/';
+            // $file_name = basename($_FILES['image']['name']);
+            // $upload_path = $upload_dir . $file_name;
+
+            // if (move_uploaded_file($_FILES['image']['tmp_name'], $upload_path)) {
+            //     // echo "Fichier uploadé avec succès : " . $upload_path;
+            //     $image = $file_name;
+            //      // on stocke uniquement le nom du fichier
+            // } else {
+            //     // echo "Erreur lors du téléchargement.";
+            //     $info .= alert("Erreur lors du téléchargement de l'image.", "danger");
+            // }
+
+
             // $image = trim(htmlspecialchars($_POST['image']));
 
-            $upload_dir = '../assets/img/';
-            $file_name = basename($_FILES['image']['name']);
-            $upload_path = $upload_dir . $file_name;
 
-            if (move_uploaded_file($_FILES['image']['tmp_name'], $upload_path)) {
-                // echo "Fichier uploadé avec succès : " . $upload_path;
-                $image = $file_name;
-                 // on stocke uniquement le nom du fichier
-            } else {
-                // echo "Erreur lors du téléchargement.";
-                $info .= alert("Erreur lors du téléchargement de l'image.", "danger");
-            }
-
-
-            // $image = trim(htmlspecialchars($_POST['image']));
-
+            // debug($_POST);
             $actors = trim(htmlspecialchars($_POST['actors']));
             $ageLimit = trim(htmlspecialchars($_POST['ageLimit']));
             $duration = trim(htmlspecialchars($_POST['duration']));
@@ -137,16 +149,62 @@ debug($_POST);
             // 
             // } elseif {
 
-            if ($info == "") {
-                addFilm($category_id, $title, $director, $file_name, $actors, $ageLimit, $duration, $price, $synopsis, $date, $stock);
+
+
+
+            $image = strtolower($image);
+            $image = str_replace(" ", "_", $image);
+    
+    
+            $filmExist = checkFilm($title);
+    
+            if ($filmExist) {
+                $info .= alert("Le film existe déjà", "danger");
+            } else {
+    
+                // On ajoute l'image
+                $path = "../assets/img/" . $image;
+                move_uploaded_file($_FILES['image']['tmp_name'], $path);
+    
+                // On ajoute le film
+                
+            }
+
+            $filmBdd = showFilm($title);
+
+            if ($filmBdd) {
+
+                $idFilm = $_GET['id_film'];
+                updateFilm($idFilm, $title, $director, $image, $actors, $ageLimit, $duration, $price, $synopsis, $date, $stock);
+
+            } else {
+                addFilm($category_id, $title, $director, $image, $actors, $ageLimit, $duration, $price, $synopsis, $date, $stock);
                 
                 $info = alert("Le film a bien été ajouté", "success");
             }
+
+
 // debug($_POST);
         }
     }
 }
 
+if (isset($_GET['action']) && isset($_GET['id'])) {
+
+    
+    if (!empty($_GET['action']) && $_GET['action'] == "update" && !empty($_GET['id'])) {
+        
+        $idFilm = htmlspecialchars($_GET['id']);
+        $filmBdd = showIdFilm($idFilm);
+    }
+
+    if (!empty($_GET['action']) && $_GET['action'] == "delete" && !empty($_GET['id'])) {
+
+        deleteFilm($idFilm);
+        header('location:films.php');
+    }
+
+}
 
 
 require_once "../inc/header.inc.php";
@@ -163,11 +221,11 @@ require_once "../inc/header.inc.php";
         ?>
 
         <form action="" method="post" class="back" enctype="multipart/form-data">
-        <!-- il faut isérer une image pour chaque film, pour le traitement des images et des fichiers en PHP on utilise la surperglobal $_FILES -->
+
         <div class="row">
             <div class="col-md-6 mb-5">
                 <label for="title">Titre de film</label>
-                <input type="text" name="title" id="title" class="form-control" value="">
+                <input type="text" name="title" id="title" class="form-control" value="<?= $filmBdd['title'] ?? '' ?>">
             </div>
 
 
@@ -182,7 +240,7 @@ require_once "../inc/header.inc.php";
             <div class="col-md-6 mb-5">
                 <label for="image">Photo</label>
                 <br>
-                <input type="file" name="image" id="image">
+                <input type="file" name="image" id="image" value="<?= $filmBdd['image'] ?? '' ?>">
             </div>
 
 
@@ -198,11 +256,11 @@ require_once "../inc/header.inc.php";
         <div class="row">
             <div class="col-md-6 mb-5">
                 <label for="director">Réalisateur</label>
-                <input type="text" class="form-control" id="director" name="director" value="">
+                <input type="text" class="form-control" id="director" name="director" value="<?= $filmBdd['director'] ?? '' ?>">
             </div>
             <div class="col-md-6">
                 <label for="actors">Acteur(s)</label>
-                <input type="text" class="form-control" id="actors" name="actors" value="" placeholder="séparez les noms d'acteurs avec un /">
+                <input type="text" class="form-control" id="actors" name="actors" value="<?= $filmBdd['actors'] ?? '' ?>" placeholder="séparez les noms d'acteurs avec un /">
             </div>
         </div>
         <div class="row">
@@ -242,38 +300,38 @@ require_once "../inc/header.inc.php";
         <div class="row">
             <div class="col-md-6 mb-5">
                 <label for="duration">Durée du film</label>
-                <input type="time" class="form-control" id="duration" name="duration"  min="01:00" value="">
+                <input type="time" class="form-control" id="duration" name="duration"  min="01:00" value="<?= $filmBdd['duration'] ?? '' ?>">
             </div>
 
             <div class="col-md-6 mb-5">
 
                 <label for="date">Date de sortie</label>
-                <input type="date" name="date" id="date" class="form-control" value="">
+                <input type="date" name="date" id="date" class="form-control" value="<?= $filmBdd['date'] ?? '' ?>">
             </div>
         </div>
         <div class="row">
             <div class="col-md-6 mb-5">
                 <label for="price">Prix</label>
                 <div class=" input-group">
-                    <input type="text" class="form-control" id="price" name="price" aria-label="Euros amount (with dot and two decimal places)" value="">
+                    <input type="text" class="form-control" id="price" name="price" aria-label="Euros amount (with dot and two decimal places)" value="<?= $filmBdd['price'] ?? '' ?>">
                     <span class="input-group-text">€</span>
                 </div>
             </div>
 
             <div class="col-md-6">
                 <label for="stock">Stock</label>
-                <input type="number" name="stock" id="stock" class="form-control" min="0" value=""> <!--pas de stock négativ donc je rajoute min="0"-->
+                <input type="number" name="stock" id="stock" class="form-control" min="0" value="<?= $filmBdd['stock'] ?? '' ?>"> <!--pas de stock négativ donc je rajoute min="0"-->
             </div>
         </div>
         <div class="row">
             <div class="col-12">
                 <label for="synopsis">Synopsis</label>
-                <textarea type="text" class="form-control" id="synopsis" name="synopsis" rows="10"></textarea>
+                <textarea type="text" class="form-control" id="synopsis" name="synopsis" rows="10"><?= isset($filmBdd) ? $filmBdd['synopsis'] : '' ?></textarea>
             </div>
         </div>
 
         <div class="row justify-content-center">
-            <button type="submit" class="btn btn-danger p-3 w-25">Ajouter un film</button>
+            <button type="submit" class="btn btn-danger p-3 w-25"><?= isset($filmBdd) ? 'Modifier le film' : ' Ajouter un film' ?></button>
         </div>
 
     </form>

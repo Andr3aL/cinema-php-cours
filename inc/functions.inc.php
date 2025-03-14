@@ -592,5 +592,106 @@ function addFilm(int $category_id, string $title, string $director, string $imag
 
 }
 
+function checkFilm(string $title) : mixed {
+
+    $cnx = connexionBdd();
+    $sql = "SELECT title FROM films WHERE title = :title";
+    $request = $cnx->prepare($sql);
+    $request->execute(array(
+
+        ':title' => $title
+    ));
+
+    $result = $request->fetch(); // transforme l'objet qu'on récupère en tableau !
+
+    return $result; // car on veut le tableau
+
+}
+
+
+function allFilms() : mixed {
+
+    $cnx = connexionBdd();
+    $sql = "SELECT * FROM films";
+    $request = $cnx->query($sql);
+    $result = $request->fetchAll(); // on veut tous les utilisateurs (on récupère toutes les lignes à la fois), donc on utilise fetchAll(), car fetch() ne donne qu'un élement
+    return $result;
+}
+
+function showFilm(string $title) : mixed { // quand il trouve, c'est un tableau. Quand il trouve pas, c'est un booléen
+    $cnx = connexionBdd();
+    $sql = "SELECT * FROM films WHERE title = :title"; // le :name vient du formulaire
+    $request = $cnx->prepare($sql);
+    $request->execute(array(
+
+        ":title" => $title,
+
+    ));
+    $result = $request->fetch();
+    return $result;
+}
+
+function updateFilm(int $id, string $title, string $director, string $image, string $actors, string $ageLimit, string $duration, float $price, string $synopsis, string $date, int $stock) : void {
+
+    $cnx = connexionBdd();
+    $sql = "UPDATE films SET
+     
+    title = :title,
+    director = :director,
+    image = :image,
+    actors = :actors,
+    ageLimit = :ageLimit,
+    duration = :duration,
+    price = :price,
+    synopsis = :synopsis,
+    date = :date,
+    stock = :stock
+    
+    WHERE id_film = :id";
+
+    $request = $cnx->prepare($sql);
+
+    $request->execute(array(
+
+        ':id_film' => $id,
+        ':title' => $title,
+        ':director' => $director,
+        ':image' => $image,
+        ':actors' => $actors,
+        ':ageLimit' => $ageLimit,
+        ':duration' => $duration,
+        ':price' => $price,
+        ':synopsis' => $synopsis,
+        ':date' => $date,
+        ':stock' => $stock
+    ));
+}
+
+function showIdFilm(int $id) : mixed { // quand il trouve, c'est un tableau. Quand il trouve pas, c'est un booléen
+    $cnx = connexionBdd();
+    $sql = "SELECT * FROM films WHERE id_film = :id"; // le :name vient du formulaire
+    $request = $cnx->prepare($sql);
+    $request->execute(array(
+
+        ":id" => $id,
+
+    ));
+    $result = $request->fetch();
+    return $result;
+}
+
+function deleteFilm(int $id) : void {
+
+    $cnx = connexionBdd();
+    $sql = "DELETE FROM films WHERE id_film = :id";
+    $request = $cnx->prepare($sql);
+
+    $request->execute(array(
+
+        ':id' => $id
+
+    ));
+
+}
 
 ?>

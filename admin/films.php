@@ -13,6 +13,7 @@ if (!isset($_SESSION['client'])) {
     }
 }
 
+$info = "";
 
 
 
@@ -27,6 +28,9 @@ require_once "../inc/header.inc.php";
 <div class="d-flex flex-column m-auto mt-5">
     
     <h2 class="text-center fw-bolder mb-5 text-danger">Liste des films</h2>
+
+    <?= $info ?>
+
     <a href="gestion_film.php" class="btn align-self-end"> Ajouter un film</a>
     <table class="table table-dark table-bordered mt-5 " >
             <thea>
@@ -50,38 +54,57 @@ require_once "../inc/header.inc.php";
             </thea>
             <tbody>
 
+            <?php
+
+                
+
+
+                $films = allFilms();
+                foreach ($films as $film) {
+
+               $actors = explode("/", $film['actors']);
+          
+
+            ?>
               
                         <tr>
 
                             <!-- Je récupére les valeus de mon tabelau $film dans des td -->
-                            <td></td>
-                            <td> </td>
-                            <td> <img src="" alt="affiche du film" class="img-fluid"></td>
-                            <td> </td>
+                            <td><?= $film['id_film'] ?></td>
+                            <td><?= ucfirst($film['title']) ?></td>
+                            <td><img src="<?=RACINE_SITE?>assets/img/<?= $film['image'] ?>" alt="affiche du film" class="img-fluid"></td>
+                            <td><?= html_entity_decode($film['director']) ?></td>
                             <td> 
                                 <ul>
-                                
-                                    <li></li>
-                          
-                               
+
+                                <?php
+                                    foreach ($actors as $actor) {
+                                ?>
+
+                                        <li><?= $actor ?></li>
+
+                                <?php 
+                                    }
+                                ?>
+        
                                 </ul>
                             </td>
-                            <td> </td>
-                            <td> </td>
-                            <td></td>
-                            <td> €</td>
-                            <td> </td>
-                            <td> ...</td>
-                            <td> </td>
-                            <td class="text-center"><a href=""><i class="bi bi-trash3-fill"></i></a></td>
-                            <td class="text-center"><a href=""><i class="bi bi-pen-fill"></i></a></td>
+                            <td><?= html_entity_decode($film['ageLimit']) ?></td>
+                            <td><?= html_entity_decode($film['category_id']) ?></td>
+                            <td><?= html_entity_decode($film['duration']) ?></td>
+                            <td><?= html_entity_decode($film['price']) ?>€</td>
+                            <td><?= html_entity_decode($film['stock']) ?></td>
+                            <td><?= html_entity_decode(substr(ucfirst($film['synopsis']), 0, 100)) . "..." ?></td>
+                            <td><?= html_entity_decode($film['date']) ?></td>
+                            <td class="text-center"><a href="films.php?action=delete&id=<?= $film['id_film'] ?>" onclick="return(confirm('Êtes-vous sûr de vouloir supprimer ce film ?'))"><i class="bi bi-trash3-fill"></i></a></td>
+                            <td class="text-center"><a href="filmForm.php?action=update&id=<?= $film['id_film'] ?>"><i class="bi bi-pen-fill"></i></a></td>
                            
                         </tr>
 
 
                     <?php
                
-
+            }
 
                 ?>
 
