@@ -332,3 +332,25 @@ th {
     top: 50%;
     transform: translateY(-50%);
 }
+
+
+
+
+
+
+/* ###################################  Rajout perso ####################################### */
+
+
+.films {
+    position: relative !important;
+}
+
+#messagePlusNbFilms {
+    /* margin-top: 300px; */
+    position: absolute !important;
+    top: 20%;
+    left: 20%;
+}
+
+
+

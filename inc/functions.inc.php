@@ -1,5 +1,10 @@
 <?php
 session_start();
+
+// Initialiser le panier comme un tableau si ce n'est pas déjà fait
+if (!isset($_SESSION['panier']) || !is_array($_SESSION['panier'])) {
+    $_SESSION['panier'] = array();
+}
 // constante pour définir le chemin du site
 
 define("RACINE_SITE", "http://localhost/cinema/");
@@ -592,16 +597,19 @@ function addFilm(int $category_id, string $title, string $director, string $imag
 
 }
 
-function checkFilm(string $title) : mixed {
+function checkFilm(string $title) : mixed { // si le film existe déjà, il renvoie le film. Sinon, il renvoie false -> c'est pourquoi on return un type "mixed" dans cette fonction
 
     $cnx = connexionBdd();
     $sql = "SELECT title FROM films WHERE title = :title";
     $request = $cnx->prepare($sql);
-    $request->execute(array(
+    $request->bindValue('title', $title, PDO::PARAM_STR); // méthode de sécurisation supplémentaire (bindValue). PDO -> c'est l'objet, PARAM_STR -> c'est l'attribut
 
-        ':title' => $title
-    ));
+    // $request->execute(array(
 
+    //     ':title' => $title
+    // ));
+
+    $request->execute();
     $result = $request->fetch(); // transforme l'objet qu'on récupère en tableau !
 
     return $result; // car on veut le tableau
@@ -620,7 +628,7 @@ function allFilms() : mixed {
 
 function showFilm(string $title) : mixed { // quand il trouve, c'est un tableau. Quand il trouve pas, c'est un booléen
     $cnx = connexionBdd();
-    $sql = "SELECT * FROM films WHERE title = :title"; // le :name vient du formulaire
+    $sql = "SELECT title FROM films WHERE title = :title"; // "grâce au title, on récupère que le titre du film considéré"
     $request = $cnx->prepare($sql);
     $request->execute(array(
 
@@ -650,10 +658,10 @@ function updateFilm(int $id, string $title, string $director, string $image, str
     WHERE id_film = :id";
 
     $request = $cnx->prepare($sql);
-
+    
     $request->execute(array(
 
-        ':id_film' => $id,
+        ':id' => $id,
         ':title' => $title,
         ':director' => $director,
         ':image' => $image,
@@ -669,7 +677,7 @@ function updateFilm(int $id, string $title, string $director, string $image, str
 
 function showIdFilm(int $id) : mixed { // quand il trouve, c'est un tableau. Quand il trouve pas, c'est un booléen
     $cnx = connexionBdd();
-    $sql = "SELECT * FROM films WHERE id_film = :id"; // le :name vient du formulaire
+    $sql = "SELECT * FROM films WHERE id_film = :id"; // "grâce à l'id, on récupère toutes les données"
     $request = $cnx->prepare($sql);
     $request->execute(array(
 
@@ -693,5 +701,186 @@ function deleteFilm(int $id) : void {
     ));
 
 }
+
+
+
+function all6Films() : mixed {
+
+    $cnx = connexionBdd();
+    $sql = "SELECT * FROM films LIMIT 6";
+    $request = $cnx->query($sql);
+    $result = $request->fetchAll(); // on veut tous les utilisateurs (on récupère toutes les lignes à la fois), donc on utilise fetchAll(), car fetch() ne donne qu'un élement
+    return $result;
+}
+
+function initPanier() {
+    if (!isset($_SESSION['panier'])) {
+        $_SESSION['panier'] = array();
+    }
+}
+
+
+
+// gestion de la déconnexion
+if (isset($_GET['action']) && $_GET['action'] === 'deconnexion') {
+    // Vider le panier avant de se déconnecter
+    $_SESSION['panier'] = array();
+    // Supprimer l'indice 'client' de la session
+    unset($_SESSION['client']);
+    // Redirection
+    header('location:'.RACINE_SITE.'index.php');
+    exit;
+}
+
+
+function countFilms() : int {
+    $cnx = connexionBdd();
+    $sql = "SELECT COUNT(*) as total FROM films";
+    $request = $cnx->query($sql);
+    $result = $request->fetch();
+    return $result['total'];
+}
+
+
+################################# Table Order #####################################
+
+/**
+ * Fonction pour créer la table order
+ */
+function createTableOrder() : void {
+    $cnx = connexionBdd();
+    $sql = "CREATE TABLE IF NOT EXISTS `order` (
+        id_order INT(11) NOT NULL PRIMARY KEY AUTO_INCREMENT,
+        user_id INT(11) NOT NULL,
+        price FLOAT NOT NULL,
+        created_at DATETIME NOT NULL,
+        is_paid ENUM('0','1') DEFAULT '0',
+        FOREIGN KEY (user_id) REFERENCES users(id_user)
+    )";
+    
+    $request = $cnx->exec($sql);
+}
+
+// createTableOrder();
+
+/**
+ * Fonction pour créer la table order_details
+ */
+function createTableOrderDetails() : void {
+    $cnx = connexionBdd();
+    $sql = "CREATE TABLE IF NOT EXISTS order_details (
+        order_id INT(11) NOT NULL,
+        film_id INT(11) NOT NULL,
+        price_film FLOAT NOT NULL,
+        quantity INT(11) NOT NULL,
+        PRIMARY KEY (order_id, film_id),
+        FOREIGN KEY (order_id) REFERENCES `order`(id_order),
+        FOREIGN KEY (film_id) REFERENCES films(id_film)
+    )";
+    
+    $request = $cnx->exec($sql);
+}
+
+// createTableOrderDetails();
+
+
+
+
+/**
+ * Fonction pour enregistrer une commande
+ * @param int $user_id - ID de l'utilisateur
+ * @param float $total - Montant total de la commande
+ * @return int - ID de la commande créée
+ */
+function saveOrder(int $user_id, float $total) : int {
+    $cnx = connexionBdd();
+    $sql = "INSERT INTO `order` (user_id, price, created_at, is_paid) 
+            VALUES (:user_id, :price, NOW(), '1')";
+    
+    $request = $cnx->prepare($sql);
+    $request->execute([
+        ':user_id' => $user_id,
+        ':price' => $total
+    ]);
+    
+    // Retourne l'ID de la dernière insertion
+    return $cnx->lastInsertId();
+}
+
+/**
+ * Fonction pour enregistrer un détail de commande
+ * @param int $order_id - ID de la commande
+ * @param int $film_id - ID du film
+ * @param float $price - Prix du film
+ * @param int $quantity - Quantité achetée
+ */
+function saveOrderDetail(int $order_id, int $film_id, float $price, int $quantity) : void {
+    $cnx = connexionBdd();
+    $sql = "INSERT INTO order_details (order_id, film_id, price_film, quantity) 
+            VALUES (:order_id, :film_id, :price_film, :quantity)";
+    
+    $request = $cnx->prepare($sql);
+    $request->execute([
+        ':order_id' => $order_id,
+        ':film_id' => $film_id,
+        ':price_film' => $price,
+        ':quantity' => $quantity
+    ]);
+}
+
+/**
+ * Fonction pour enregistrer une commande complète avec tous ses détails
+ * @param int $user_id - ID de l'utilisateur
+ * @param array $panier - Panier contenant les films
+ * @param float $total - Montant total de la commande
+ */
+function processOrder(int $user_id, array $panier, float $total) : void {
+    // 1. On crée la commande principale
+    $order_id = saveOrder($user_id, $total);
+    
+    // 2. On enregistre chaque film dans order_details
+    foreach ($panier as $film_id => $film) {
+        saveOrderDetail(
+            $order_id,
+            $film_id,
+            $film['price'],
+            $film['quantity']
+        );
+    }
+}
+
+/**
+ * Fonction pour récupérer toutes les commandes d'un utilisateur
+ * @param int $user_id - ID de l'utilisateur
+ * @return array - Liste des commandes
+ */
+function getUserOrders(int $user_id) : array {
+    $cnx = connexionBdd();
+    $sql = "SELECT * FROM order WHERE user_id = :user_id ORDER BY created_at DESC";
+    
+    $request = $cnx->prepare($sql);
+    $request->execute([':user_id' => $user_id]);
+    
+    return $request->fetchAll();
+}
+
+/**
+ * Fonction pour récupérer les détails d'une commande
+ * @param int $order_id - ID de la commande
+ * @return array - Détails de la commande
+ */
+function getOrderDetails(int $order_id) : array {
+    $cnx = connexionBdd();
+    $sql = "SELECT od.*, f.title, f.image 
+            FROM order_details od
+            JOIN films f ON od.film_id = f.id_film
+            WHERE od.order_id = :order_id";
+    
+    $request = $cnx->prepare($sql);
+    $request->execute([':order_id' => $order_id]);
+    
+    return $request->fetchAll();
+}
+
 
 ?>

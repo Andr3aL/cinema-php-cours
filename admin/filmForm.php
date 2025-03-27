@@ -5,28 +5,50 @@ require_once "../inc/functions.inc.php";
 
 
 if (!isset($_SESSION['client'])) {
-    header('location:'.RACINE_SITE.'authentication.php');
+    header('location:' . RACINE_SITE . 'authentication.php');
 } else {
     if ($_SESSION['client']['role'] == "ROLE_USER") {
-        header('location:'.RACINE_SITE.'profil.php');
+        header('location:' . RACINE_SITE . 'profil.php');
     }
 }
 
 $info = "";
+// $idFilm = htmlspecialchars($_GET['id']);
+// $filmBdd = showIdFilm($idFilm);
 
-if (!empty($_POST)) {
+if (isset($_GET['action']) && isset($_GET['id'])) {
 
+
+    if (!empty($_GET['action']) && $_GET['action'] == "update" && !empty($_GET['id'])) {
+
+        $idFilm = htmlspecialchars($_GET['id']); // id qu'on a récupéré dans l'url avec $_GET
+        $filmBdd = showIdFilm($idFilm);
+
+        // var_dump($idFilm, $filmBdd);
+        // die();
+
+    }
+
+    if (!empty($_GET['action']) && $_GET['action'] == "delete" && !empty($_GET['id'])) {
+
+        deleteFilm($idFilm);
+        header('location:films.php');
+    }
+}
+
+if (!empty($_POST)) { // on verifie si j'ai cliqué ou non --> est-ce que mes données sont remplies ou vides ?
+// POST et pas GET : car plus sécurisé + car dans le html form on a réf POST + ça permlet de rentrer + de données + si on avait pris GET, l'url serait LONGUE et VISIBLE (donc pas sécurisé)
     $verif = true;
-    foreach($_POST as $key=> $value) { // je prend les valeurs de mon tableau en le parcourant
+    // foreach : c'est pour boucler sur les clés et les valeurs (tab associatif) (c'est mieux), contrairement à for ou while
+    foreach ($_POST as $key => $value) { // je prend les valeurs de mon tableau en le parcourant
 
-        if(empty(trim($value))) { // si une de ces valeurs est vide, je passe verif en false
+        if (empty(trim($value))) { // si une de ces valeurs est vide, je passe verif en false
             $verif = false;
         }
     }
-// debug($_POST);
+    // debug($_POST);
     if ($verif === false) {
         $info = alert("Veuillez renseigner tous les champs", "danger");
-        
     } else {
         // debug($_POST);
 
@@ -51,7 +73,7 @@ if (!empty($_POST)) {
         if (!isset($_FILES['image']) || $_FILES['image']['error'] != 0) {
             $info .= alert("Erreur sur l'image", "danger");
         } else {
-            $extensions = ['jpg', 'jpeg', 'png', 'gif'];
+            $extensions = ['jpg', 'jpeg', 'png', 'gif']; // extensions autorisées
             $extension = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
             if (!in_array($extension, $extensions)) {
                 $info .= alert("L'extension de l'image n'est pas valide", "danger");
@@ -94,14 +116,14 @@ if (!empty($_POST)) {
 
         if (!isset($_POST['stock'])) {
             $info .= alert("Le champ stock n'est pas valide", "danger");
-        } 
+        }
 
         debug($info);
 
-        if($info == "") {
+        if ($info == "") {
             // debug($_FILES);
             // debug($_FILES['image']);
-// debug($_POST);
+            // debug($_POST);
 
             $title = trim(htmlspecialchars($_POST['title']));
             $director = trim(htmlspecialchars($_POST['director']));
@@ -139,7 +161,7 @@ if (!empty($_POST)) {
             $synopsis = trim(htmlspecialchars($_POST['synopsis']));
             $date = trim(htmlspecialchars($_POST['date']));
             $stock = intval(trim(htmlspecialchars($_POST['stock'])));
-            $category_id = intval(trim(htmlspecialchars($_POST['categories'])));
+            $category_id = intval(trim(htmlspecialchars($_POST['categories']))); // le name du form est, ici, categories
 
             // if ($film) {
 
@@ -154,57 +176,51 @@ if (!empty($_POST)) {
 
             $image = strtolower($image);
             $image = str_replace(" ", "_", $image);
-    
-    
+
+
             $filmExist = checkFilm($title);
-    
+
             if ($filmExist) {
                 $info .= alert("Le film existe déjà", "danger");
             } else {
-    
+
                 // On ajoute l'image
                 $path = "../assets/img/" . $image;
-                move_uploaded_file($_FILES['image']['tmp_name'], $path);
-    
+                move_uploaded_file($_FILES['image']['tmp_name'], $path); // tmp_name : c'est le chemin d'origine
+
                 // On ajoute le film
-                
+
             }
 
             $filmBdd = showFilm($title);
+            // var_dump($filmBdd);
+            // die();
 
             if ($filmBdd) {
 
-                $idFilm = $_GET['id_film'];
+                $idFilm = $_GET['id'];
+
+                // var_dump($_POST);
+                // die;
                 updateFilm($idFilm, $title, $director, $image, $actors, $ageLimit, $duration, $price, $synopsis, $date, $stock);
+
+                $info = alert("Le film existe déjà et a bien été modifié", "ainfo");
+
+                header('location:'.RACINE_SITE.'films.php');
 
             } else {
                 addFilm($category_id, $title, $director, $image, $actors, $ageLimit, $duration, $price, $synopsis, $date, $stock);
-                
+
                 $info = alert("Le film a bien été ajouté", "success");
             }
 
-
-// debug($_POST);
+            // debug($_POST);
         }
     }
 }
 
-if (isset($_GET['action']) && isset($_GET['id'])) {
 
-    
-    if (!empty($_GET['action']) && $_GET['action'] == "update" && !empty($_GET['id'])) {
-        
-        $idFilm = htmlspecialchars($_GET['id']);
-        $filmBdd = showIdFilm($idFilm);
-    }
 
-    if (!empty($_GET['action']) && $_GET['action'] == "delete" && !empty($_GET['id'])) {
-
-        deleteFilm($idFilm);
-        header('location:films.php');
-    }
-
-}
 
 
 require_once "../inc/header.inc.php";
@@ -216,12 +232,12 @@ require_once "../inc/header.inc.php";
 <main>
     <h2 class="text-center fw-bolder mb-5 text-danger">Ajout de film</h2>
 
-        <?php
-        echo $info;
-        ?>
+    <?php
+    echo $info;
+    ?>
 
-        <form action="" method="post" class="back" enctype="multipart/form-data">
-
+    <form action="" method="post" class="back" enctype="multipart/form-data"> 
+<!-- multipart/form-data sert à manipuler des fichiers comme des images -->
         <div class="row">
             <div class="col-md-6 mb-5">
                 <label for="title">Titre de film</label>
@@ -267,40 +283,49 @@ require_once "../inc/header.inc.php";
             <!-- raccouci bs5 select multiple -->
             <div class="mb-3">
                 <label for="ageLimit" class="form-label">Àge limite</label>
+
+
+                <?php// foreach($filmBdd['ageLimit'] as $ageLimit) : ?>
                 <select class="form-select form-select-lg" name="ageLimit" id="ageLimit">
-                    <option value="10">10</option>                  
+                  
+                    <option value="10">10</option>
                     <option value="13">13</option>
                     <option value="16">16</option>
+                 
                 </select>
+                <?php// endforeach; ?>
+
+
+
             </div>
         </div>
         <div class="row">
             <label for="categories">Genre du film</label>
 
-         
-            
+
+
             <?php $categories = allCategory();
-        foreach($categories as $categorie) : 
-            // var_dump($categorie['name']);
+            foreach ($categories as $categorie) :
+                // var_dump($categorie['name']);
             ?>
-            <div class="form-check col-sm-12 col-md-4">
+                <div class="form-check col-sm-12 col-md-4">
 
-                    <input class="form-check-input" type="radio" name="categories" id="<?= $categorie['name']?>" value="<?= $categorie['id_categorie'] ?>">
+                    <input class="form-check-input" type="radio" name="categories" id="<?= $categorie['name'] // ce name là est la colonne "name" de la bdd ?>" value="<?= $categorie['id_categorie'] ?>">
 
-                    <label class="form-check-label" for="<?= $categorie['name']?>">
-                        <?= ucfirst(html_entity_decode($categorie['name']))?>
+                    <label class="form-check-label" for="<?= $categorie['name'] ?>">
+                        <?= ucfirst(html_entity_decode($categorie['name'])) ?>
                     </label>
                 </div>
 
-        <?php endforeach; ?>
+            <?php endforeach; ?>
 
-           
+
 
         </div>
         <div class="row">
             <div class="col-md-6 mb-5">
                 <label for="duration">Durée du film</label>
-                <input type="time" class="form-control" id="duration" name="duration"  min="01:00" value="<?= $filmBdd['duration'] ?? '' ?>">
+                <input type="time" class="form-control" id="duration" name="duration" min="01:00" value="<?= $filmBdd['duration'] ?? '' ?>">
             </div>
 
             <div class="col-md-6 mb-5">

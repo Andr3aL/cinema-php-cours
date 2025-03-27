@@ -25,7 +25,7 @@
 
 <body>
 
-    <header>
+    <header class="mb-5">
         <nav class="navbar navbar-expand-lg fixed-top ">
             <div class="container-fluid">
                 <!-- Chemin optimisé grâce à une constante RACINE_SITE -->

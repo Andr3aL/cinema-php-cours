@@ -2,9 +2,6 @@
 
 require_once "../inc/functions.inc.php";
 
-
-
-
 if (!isset($_SESSION['client'])) {
     header('location:'.RACINE_SITE.'authentication.php');
 } else {
@@ -14,9 +11,6 @@ if (!isset($_SESSION['client'])) {
 }
 
 $info = "";
-
-
-
 
 require_once "../inc/header.inc.php";
 
@@ -31,7 +25,7 @@ require_once "../inc/header.inc.php";
 
     <?= $info ?>
 
-    <a href="gestion_film.php" class="btn align-self-end"> Ajouter un film</a>
+    <a href="filmForm.php" class="btn align-self-end"> Ajouter un film</a>
     <table class="table table-dark table-bordered mt-5 " >
             <thea>
                     <tr >
@@ -56,15 +50,11 @@ require_once "../inc/header.inc.php";
 
             <?php
 
-                
-
-
                 $films = allFilms();
                 foreach ($films as $film) {
 
-               $actors = explode("/", $film['actors']);
+                $actors = explode("/", $film['actors']);
           
-
             ?>
               
                         <tr>
@@ -100,21 +90,11 @@ require_once "../inc/header.inc.php";
                             <td class="text-center"><a href="filmForm.php?action=update&id=<?= $film['id_film'] ?>"><i class="bi bi-pen-fill"></i></a></td>
                            
                         </tr>
-
-
                     <?php
-               
             }
-
                 ?>
-
-
             </tbody>
-            
-
     </table>
-
-
 </div>
 
 
